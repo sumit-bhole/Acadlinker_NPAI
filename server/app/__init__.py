@@ -48,10 +48,10 @@ def create_app():
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
 
     from app.friends.routes import friends_bp
-    app.register_blueprint(friends_bp)
+    app.register_blueprint(friends_bp, url_prefix='/api/friends')
 
     from app.notifications.routes import notifications_bp
-    app.register_blueprint(notifications_bp)
+    app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
 
     from app.search.routes import search_bp
     app.register_blueprint(search_bp)
