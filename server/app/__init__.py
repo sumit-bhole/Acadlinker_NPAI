@@ -66,6 +66,10 @@ def create_app():
 
     from app.suggestions.routes import suggestions_bp
     app.register_blueprint(suggestions_bp, url_prefix='/api/suggestions')
+
+    from app.posts.routes import posts_bp
+    app.register_blueprint(posts_bp, url_prefix='/api/posts')
+
     # =================================================================
     # Register Backend Admin Interface
     # =================================================================
