@@ -34,7 +34,7 @@ def serialize_post(post):
         "description": post.description,
         "file_url": image_url,
         "date_posted": post.timestamp.isoformat(),
-        "author": {
+        "user": {
             "id": post.user.id,
             "name": post.user.full_name,
             "profile_pic": getattr(post.user, "profile_pic", None)
@@ -152,5 +152,6 @@ def home_feed():
     ).order_by(Post.timestamp.desc()).all()
     
     serialized_posts = [serialize_post(post) for post in posts]
+    print(serialized_posts)
     
     return jsonify(serialized_posts), 200
