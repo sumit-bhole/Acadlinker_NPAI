@@ -14,6 +14,7 @@ class Config:
     REMEMBER_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_SECURE = False
 
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "*")   # for CORS
 
     # Cloudinary credentials
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")

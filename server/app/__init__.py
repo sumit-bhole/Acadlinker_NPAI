@@ -7,20 +7,20 @@ from config import Config
 import cloudinary
 from flask_cors import CORS
 
-
-
 db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    
     CORS(
         app,
-        origins=["http://localhost:5173"],
+        origins=[app.config["FRONTEND_URL"]],
         supports_credentials=True
     )
 
