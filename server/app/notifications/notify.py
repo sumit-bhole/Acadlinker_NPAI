@@ -1,16 +1,16 @@
 from app import db
 from app.models import Notification
 
-def notify(user, message, link="/"):
+def notify(user_id, message, link="/"): # Pass user_id instead of user object for flexibility
     """
-    Create a new notification for a user.
-    'link' should be a frontend route (like /friends/list or /messages).
+    Utility function to create a notification.
     """
     notif = Notification(
-        user_id=user.id,
+        user_id=user_id,
         message=message,
         link=link,
         is_read=False
     )
     db.session.add(notif)
     db.session.commit()
+    return notif

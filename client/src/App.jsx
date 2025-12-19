@@ -8,6 +8,7 @@ import AuthPage from "./pages/AuthPage";
 import FriendsList from "./pages/FriendsList";
 import Home from "./pages/Home";
 import ChatApp from "./pages/chat";
+import NotificationsPage from './pages/NotificationsPage';
 import { Loader2 } from "lucide-react";
 import SearchPage from "./pages/SearchPage"; // 1. Import the new SearchPage
 
@@ -32,6 +33,9 @@ const App = () => {
           path="/"
           element={isAuthenticated ? <Home /> : <Navigate to="/auth" />}
         />
+
+        <Route path="/notifications" element={<NotificationsPage />} />
+        
 
         {/* 🔹 User profile */}
         <Route
