@@ -20,7 +20,8 @@ def create_app():
     
     CORS(
         app,
-        origins=[app.config["FRONTEND_URL"]],
+        # origins=[app.config["FRONTEND_URL"]],
+        origins=["*"],
         supports_credentials=True
     )
 
@@ -69,6 +70,9 @@ def create_app():
 
     from app.posts.routes import posts_bp
     app.register_blueprint(posts_bp, url_prefix='/api/posts')
+
+    from app.messages.routes import messages_bp
+    app.register_blueprint(messages_bp, url_prefix='/api/messages')
 
     # =================================================================
     # Register Backend Admin Interface
