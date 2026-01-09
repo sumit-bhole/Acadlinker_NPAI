@@ -7,27 +7,21 @@ import axios from "axios";
 const Profile = () => {
   const { currentUser } = useAuth();
   const { userId } = useParams();
+
   const [user, setUser] = useState(null);
-  const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const isCurrentUser = currentUser && currentUser.id === parseInt(userId);
+  const isCurrentUser =
+    currentUser && currentUser.id === parseInt(userId);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Fetch profile and posts
-        const [userRes, postsRes] = await Promise.all([
-          axios.get(`/api/profile/${userId}`),
-          axios.get(`/api/profile/${userId}/posts`),
-        ]);
-
-        setUser(userRes.data);
-        setUserPosts(postsRes.data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
+        const res = await axios.get(`/api/profile/${userId}`);
+        setUser(res.data);
+      } catch (err) {
+        console.error("Profile fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -35,49 +29,93 @@ const Profile = () => {
     fetchData();
   }, [userId]);
 
-  // ---------------------------
-  // Friend Request Handlers
-  // ---------------------------
+  /* ---------------- Friend Actions ---------------- */
+
   const sendFriendRequest = async () => {
-    try {
-      await axios.post(`/api/friends/send/${user.id}`, {}, { withCredentials: true });
-      setUser((prev) => ({ ...prev, request_sent: true }));
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to send friend request");
-    }
+    await axios.post(`/api/friends/send/${user.id}`, {}, { withCredentials: true });
+    setUser((p) => ({ ...p, request_sent: true }));
   };
 
   const acceptFriendRequest = async () => {
-    try {
-      const res = await axios.post(`/api/friends/accept/${user.request_id}`, {}, { withCredentials: true });
-      setUser((prev) => ({
-        ...prev,
-        request_received: false,
-        is_friend: true,
-      }));
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to accept friend request");
-    }
+    await axios.post(`/api/friends/accept/${user.request_id}`, {}, { withCredentials: true });
+    setUser((p) => ({ ...p, is_friend: true, request_received: false }));
   };
 
   const rejectFriendRequest = async () => {
-    try {
-      await axios.post(`/api/friends/reject/${user.request_id}`, {}, { withCredentials: true });
-      setUser((prev) => ({
-        ...prev,
-        request_received: false,
-      }));
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to reject friend request");
-    }
+    await axios.post(`/api/friends/reject/${user.request_id}`, {}, { withCredentials: true });
+    setUser((p) => ({ ...p, request_received: false }));
   };
+
+  /* ---------------- Button Renderer ---------------- */
+
+  const renderFriendButton = () => {
+    const base =
+      "px-6 py-2.5 rounded-full font-medium transition shadow-sm";
+
+    if (isCurrentUser) {
+      return (
+        <Link
+          to="/edit-profile"
+          className={`${base} bg-white border border-gray-300 hover:bg-gray-50`}
+        >
+          Edit Profile
+        </Link>
+      );
+    }
+
+    if (user.is_friend) {
+      return (
+        <Link
+          to={`/messages/${user.id}`}
+          className={`${base} bg-indigo-600 text-white hover:bg-indigo-700`}
+        >
+          Message
+        </Link>
+      );
+    }
+
+    if (user.request_sent) {
+      return (
+        <button className={`${base} bg-gray-100 text-gray-400 cursor-not-allowed`}>
+          Request Sent
+        </button>
+      );
+    }
+
+    if (user.request_received) {
+      return (
+        <div className="flex gap-2">
+          <button
+            onClick={acceptFriendRequest}
+            className={`${base} bg-indigo-600 text-white hover:bg-indigo-700`}
+          >
+            Accept
+          </button>
+          <button
+            onClick={rejectFriendRequest}
+            className={`${base} bg-white border border-red-200 text-red-600 hover:bg-red-50`}
+          >
+            Reject
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        onClick={sendFriendRequest}
+        className={`${base} bg-indigo-600 text-white hover:bg-indigo-700`}
+      >
+        Add Friend
+      </button>
+    );
+  };
+
+  /* ---------------- States ---------------- */
 
   if (loading) {
     return (
-      <div className="text-center py-40 text-gray-500 text-lg">
+      <div className="text-center py-40 text-gray-500">
         Loading profile...
       </div>
     );
@@ -85,151 +123,145 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="text-center py-40 text-red-500 text-lg">
-        User not found!
+      <div className="text-center py-40 text-red-500">
+        User not found
       </div>
     );
   }
 
-  // ---------------------------
-  // Determine button state
-  // ---------------------------
-  const renderFriendButton = () => {
-    if (isCurrentUser) return null;
-
-    if (user.is_friend) {
-      return (
-        <Link
-          to={`/messages/${user.id}`}
-          className="flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 shadow-md transition"
-        >
-          💬 Message
-        </Link>
-      );
-    } else if (user.request_sent) {
-      return (
-        <button className="bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg" disabled>
-          ✅ Request Sent
-        </button>
-      );
-    } else if (user.request_received) {
-      return (
-        <div className="flex gap-2">
-          <button
-            onClick={acceptFriendRequest}
-            className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 shadow-md transition"
-          >
-            ✅ Accept
-          </button>
-          <button
-            onClick={rejectFriendRequest}
-            className="bg-red-500 text-white px-5 py-2.5 rounded-lg hover:bg-red-600 shadow-md transition"
-          >
-            ❌ Reject
-          </button>
-        </div>
-      );
-    } else {
-      return (
-        <button
-          onClick={sendFriendRequest}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 shadow-md transition"
-        >
-          ➕ Add Friend
-        </button>
-      );
-    }
-  };
+  /* ---------------- UI ---------------- */
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* LEFT: Profile Info */}
-          <div className="md:col-span-1 space-y-8">
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden relative">
-              <div className="relative h-48 bg-gray-200">
-                {user.cover_photo_url ? (
-                  <img
-                    src={user.cover_photo_url}
-                    alt="Cover"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full"></div>
-                )}
-                <div className="absolute inset-0 bg-black/10"></div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8">
 
-              <div className="relative z-10 p-6 flex flex-col items-center text-center -mt-20 sm:-mt-24">
-                <img
-                  src={user.profile_pic_url || "/default-profile.png"}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg relative z-20"
-                />
+      {/* ---------------- HEADER ---------------- */}
+      <div className="max-w-7xl mx-auto px-4 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
-                <h2 className="text-3xl font-bold text-gray-900 mt-4">{user.full_name}</h2>
-                <p className="text-gray-500 mt-1 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  {user.location || "Location not set"}
+          {/* Cover */}
+          <div className="h-48 w-full bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100">
+            {user.cover_photo_url && (
+              <img
+                src={user.cover_photo_url}
+                alt="Cover"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="px-6 pb-6 relative">
+            <div className="-mt-16">
+              <img
+                src={user.profile_pic_url || "/default-profile.png"}
+                alt="Profile"
+                className="w-32 h-32 rounded-full border-4 border-white shadow-md object-cover"
+              />
+            </div>
+
+            <div className="mt-4 flex flex-col sm:flex-row justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {user.full_name}
+                </h1>
+                <p className="text-gray-500 mt-1">
+                  {user.education || "Engineering Student"}
                 </p>
 
-                <div className="mt-6 w-full flex justify-center">{renderFriendButton()}</div>
-              </div>
-
-              {isCurrentUser && (
-                <Link
-                  to="/edit-profile"
-                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-indigo-700 font-medium px-4 py-2 rounded-lg hover:bg-white transition shadow-md z-30"
-                >
-                  ✏️ Edit Profile
-                </Link>
-              )}
-            </div>
-
-            {/* BIO */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Bio</h3>
-              <p className="text-gray-600 leading-relaxed">{user.description || "This user hasn't added a bio yet."}</p>
-            </div>
-
-            {/* Contact & Education */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Contact & Education</h3>
-              <div className="space-y-3 text-gray-700">
-                <p>{user.education || "No education listed"}</p>
-                <p>{user.mobile_no || "No mobile listed"}</p>
-                <p>{user.email}</p>
-              </div>
-            </div>
-
-            {/* Skills */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {user.skills
-                  ? user.skills.split(",").map((skill, i) => (
-                      <span key={i} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {skill.trim()}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {user.skills ? (
+                    user.skills.split(",").map((s, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-1.5 rounded-full bg-gray-100 border text-sm"
+                      >
+                        {s.trim()}
                       </span>
                     ))
-                  : <p className="text-gray-500">No skills listed.</p>}
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">
+                      No skills listed
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>{renderFriendButton()}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------------- CONTENT ---------------- */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* LEFT SIDEBAR */}
+          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+
+            {/* About */}
+            <div className="bg-white rounded-2xl border shadow-sm relative overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+              <div className="p-6">
+                <h3 className="font-semibold text-lg mb-2">About</h3>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {user.description ||
+                    "This user hasn’t added a bio yet."}
+                </p>
+              </div>
+            </div>
+
+            {/* Intro */}
+            <div className="bg-white rounded-2xl border shadow-sm relative overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+              <div className="p-6 space-y-3">
+                <h3 className="font-semibold text-lg">Intro</h3>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Education</span>
+                  <span className="font-medium text-gray-800">
+                    {user.education || "—"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Email</span>
+                  <span className="font-medium text-gray-800">
+                    {user.email}
+                  </span>
+                </div>
+
+                {user.mobile_no && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Phone</span>
+                    <span className="font-medium text-gray-800">
+                      {user.mobile_no}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Posts */}
-          <div className="md:col-span-1 space-y-6">
-            <div className="md:col-span-1">
-  <div className="bg-white p-6 rounded-xl shadow-lg mb-4">
-    <h3 className="text-xl font-bold text-gray-900">Recent Posts</h3>
-  </div>
+          {/* POSTS */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b">
+                <h3 className="text-xl font-semibold">Activity</h3>
+                <p className="text-sm text-gray-500">
+                  Recent posts and updates
+                </p>
+              </div>
 
-  <UserPosts userId={userId} isCurrentUser={isCurrentUser} />
-</div>
-</div>
+              <div className="p-6">
+                <UserPosts
+                  userId={userId}
+                  isCurrentUser={isCurrentUser}
+                />
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
