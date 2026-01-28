@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Acadlinker db",
+            "connectString": "postgresql://acadlinker_db_user:monrbSdISchSHZ6CeHxg2zdt9JiXXrvt@dpg-d5sr5gfpm1nc73cj6g8g-a.virginia-postgres.render.com/acadlinker_db"
+        }
+    ]
+}
