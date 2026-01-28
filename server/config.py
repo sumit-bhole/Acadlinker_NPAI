@@ -5,7 +5,17 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secure_key'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
+    
+    # 1. Database Configuration
+    # Prioritize the env variable 'DATABASE_URL' for production.
+    # Fallback to 'sqlite:///site.db' for local development.
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///site.db')
+
+    # 2. Fix for Render/Heroku Postgres URLs
+    # SQLAlchemy requires 'postgresql://', but some hosts provide 'postgres://'
+    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # For development over HTTP
